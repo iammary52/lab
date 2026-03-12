@@ -3,425 +3,258 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SAND STORM</title>
+  <title>Particle Clock</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: #000;
-      overflow: hidden;
-      font-family: 'Courier New', monospace;
-      width: 100vw;
-      height: 100vh;
-    }
-
-    canvas#bg {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: 0;
-    }
-
-    #stage {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: 1;
-    }
-
-    #hud {
-      position: fixed;
-      top: 20px; left: 30px;
-      z-index: 10;
-      color: rgba(0, 255, 180, 0.5);
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      pointer-events: none;
-    }
-
-    #hud span { display: block; margin-bottom: 4px; }
-
-    #corner {
-      position: fixed;
-      bottom: 20px; right: 30px;
-      z-index: 10;
-      color: rgba(255, 100, 0, 0.4);
-      font-size: 10px;
-      letter-spacing: 3px;
-      pointer-events: none;
-    }
+    body { background: #000; overflow: hidden; }
+    canvas { display: block; }
   </style>
 </head>
 <body>
-  <canvas id="bg"></canvas>
-  <canvas id="stage"></canvas>
-
-  <div id="hud">
-    <span id="hud-time">--:--:--</span>
-    <span id="hud-frame">FRAME 000000</span>
-    <span id="hud-status">● LIVE</span>
-  </div>
-  <div id="corner">SAND STORM v1.0</div>
-
+<canvas id="c"></canvas>
 <script>
-// ─── CONFIG ────────────────────────────────────────────────────────────────
-const WORDS = [
-  "INFINITY", "COSMOS", "BEYOND", "ETHER", "VOID",
-  "FRACTAL", "ENTROPY", "NEBULA", "PHOTON", "CIPHER",
-  "QUANTUM", "VORTEX", "AURORA", "ZENITH", "FLUX",
-  "MATRIX", "NEXUS", "AXIOM", "PRISM", "STORM"
-];
-
-const NUMS = () => {
-  let n = "";
-  for (let i = 0; i < (6 + Math.random() * 8 | 0); i++)
-    n += Math.random() * 10 | 0;
-  return n;
-};
-
-const PALETTE = [
-  "#00ffb4", "#00cfff", "#ff6a00", "#ff00c8",
-  "#ffe600", "#7b2fff", "#00ff41", "#ff3860"
-];
-
-// ─── CANVAS SETUP ──────────────────────────────────────────────────────────
-const bgCanvas  = document.getElementById("bg");
-const stCanvas  = document.getElementById("stage");
-const bgCtx     = bgCanvas.getContext("2d");
-const ctx       = stCanvas.getContext("2d");
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+const TAU    = Math.PI * 2;
 
 let W, H;
 function resize() {
-  W = bgCanvas.width  = stCanvas.width  = window.innerWidth;
-  H = bgCanvas.height = stCanvas.height = window.innerHeight;
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
 }
 resize();
-window.addEventListener("resize", resize);
 
-// ─── GRID RAIN (background) ────────────────────────────────────────────────
-const COLS    = 60;
-const ROWS    = 40;
-const rainDrops = [];
-
-for (let c = 0; c < COLS; c++) {
-  rainDrops.push({
-    x: (c / COLS) * 1.05,
-    y: Math.random(),
-    speed: 0.002 + Math.random() * 0.006,
-    char: () => Math.random() < 0.5
-            ? String.fromCharCode(0x30A0 + Math.random() * 96 | 0)  // katakana
-            : (Math.random() * 10 | 0).toString(),
-    alpha: 0.08 + Math.random() * 0.15,
-    color: PALETTE[Math.random() * PALETTE.length | 0],
-    timer: 0,
-    interval: 3 + Math.random() * 8 | 0,
-    current: "0"
-  });
-}
-
-function drawRain() {
-  bgCtx.clearRect(0, 0, W, H);
-  bgCtx.font = `${12 + Math.random() * 2 | 0}px 'Courier New'`;
-
-  for (const d of rainDrops) {
-    d.y += d.speed;
-    if (d.y > 1.1) { d.y = -0.05; d.x = Math.random(); }
-
-    d.timer++;
-    if (d.timer >= d.interval) { d.timer = 0; d.current = d.char(); }
-
-    bgCtx.globalAlpha = d.alpha;
-    bgCtx.fillStyle   = d.color;
-    bgCtx.fillText(d.current, d.x * W, d.y * H);
+function rand(n)  { return Math.random() * (n == null ? 1 : n); }
+function randn()  { return Math.random() - 0.5; }
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = 0 | (Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
   }
-  bgCtx.globalAlpha = 1;
+  return a;
 }
 
-// ─── PARTICLE CLASS ────────────────────────────────────────────────────────
+// ─── PARTICLE ────────────────────────────────────────────────────────────────
 class Particle {
-  constructor(x, y, color) {
-    this.x  = x;
-    this.y  = y;
-    this.ox = x;
-    this.oy = y;
-    this.color = color;
-    this.size  = 1.5 + Math.random() * 2.5;
-    // sand-fall velocity
-    this.vx = (Math.random() - 0.5) * 4;
-    this.vy = 2 + Math.random() * 6;
-    this.gravity = 0.25 + Math.random() * 0.15;
-    this.alpha = 1;
-    this.decay = 0.012 + Math.random() * 0.02;
-    this.alive = true;
-    this.phase = "hold";   // hold → scatter
-    this.holdFor = 0;
+  constructor(baseHue) {
+    this.baseHue  = baseHue;
+    this.x        = W * 0.5 + randn() * W * 0.4;
+    this.y        = H * 0.5 + randn() * H * 0.4;
+    this.vx       = 0;
+    this.vy       = 0;
+    this.tx       = this.x;
+    this.ty       = this.y;
+    this.phase    = rand(TAU);
+    this.phaseSpd = 0.038 + rand(0.10);
+    this.size     = 1.2 + rand(1.9);
   }
+
+  burst() {
+    const a = rand(TAU);
+    const s = 5 + rand(18);
+    this.vx += Math.cos(a) * s;
+    this.vy += Math.sin(a) * s;
+  }
+
+  setTarget(tx, ty) { this.tx = tx; this.ty = ty; }
 
   update() {
-    if (this.phase === "hold") {
-      // gentle shimmer
-      this.x = this.ox + Math.sin(Date.now() * 0.005 + this.oy) * 0.6;
-      return;
-    }
-    this.vx *= 0.98;
-    this.vy += this.gravity;
-    this.x  += this.vx;
-    this.y  += this.vy;
-    this.alpha -= this.decay;
-    if (this.alpha <= 0) this.alive = false;
+    const dx = this.tx - this.x;
+    const dy = this.ty - this.y;
+    this.vx   = this.vx * 0.80 + dx * 0.12;
+    this.vy   = this.vy * 0.80 + dy * 0.12;
+    this.x   += this.vx;
+    this.y   += this.vy;
+    this.phase += this.phaseSpd;
   }
 
-  draw(ctx) {
-    ctx.globalAlpha = Math.max(0, this.alpha);
-    ctx.fillStyle   = this.color;
+  draw(hueShift, pulseBoost) {
+    const b   = 0.5 + 0.5 * Math.sin(this.phase);
+    const hue = (this.baseHue + hueShift) % 360;
+    const lit = 42 + b * 55;
+    const alp = 0.45 + b * 0.55;
+    const r   = this.size * (0.6 + b * 0.7);
+    ctx.globalAlpha = alp;
+    ctx.fillStyle   = `hsl(${hue},100%,${lit}%)`;
+    ctx.shadowColor = `hsl(${hue},100%,78%)`;
+    ctx.shadowBlur  = 4 + b * 12 + pulseBoost * b;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, r, 0, TAU);
     ctx.fill();
   }
-
-  scatter() { this.phase = "scatter"; }
 }
 
-// ─── TEXT → PARTICLE BURST ─────────────────────────────────────────────────
-function textToParticles(text, cx, cy, color, fontSize) {
-  const off = document.createElement("canvas");
-  const fs  = fontSize || Math.min(W / text.length * 1.6, 140);
-  off.width  = Math.ceil(fs * text.length * 0.7) + 20;
-  off.height = Math.ceil(fs * 1.4);
-  const oc  = off.getContext("2d");
-  oc.font    = `900 ${fs}px 'Courier New', monospace`;
-  oc.fillStyle = "#fff";
-  oc.textAlign = "center";
-  oc.textBaseline = "middle";
-  oc.fillText(text, off.width / 2, off.height / 2);
+// ─── SLOT ────────────────────────────────────────────────────────────────────
+const FONT_STACK = "'Arial Black','Impact',Arial,sans-serif";
 
-  const imgData = oc.getImageData(0, 0, off.width, off.height).data;
-  const step    = Math.max(2, fs / 30 | 0);
-  const particles = [];
-  const ox = cx - off.width / 2;
-  const oy = cy - off.height / 2;
+class Slot {
+  constructor(cx, cy, fontSize, baseHue, capacity) {
+    this.cx        = cx;
+    this.cy        = cy;
+    this.fontSize  = fontSize;
+    this.current   = null;
+    this.particles = [];
+    for (let i = 0; i < capacity; i++)
+      this.particles.push(new Particle(baseHue + randn() * 28));
+  }
 
-  for (let py = 0; py < off.height; py += step) {
-    for (let px = 0; px < off.width; px += step) {
-      const idx = (py * off.width + px) * 4;
-      if (imgData[idx + 3] > 100) {
-        particles.push(new Particle(ox + px, oy + py, color));
-      }
+  _sample(ch) {
+    const fs  = this.fontSize;
+    const cw  = Math.ceil(fs * 0.78) + 24;
+    const cch = Math.ceil(fs * 1.32) + 24;
+    const off = document.createElement('canvas');
+    off.width = cw; off.height = cch;
+    const oc  = off.getContext('2d');
+    oc.font   = `900 ${fs}px ${FONT_STACK}`;
+    oc.fillStyle = '#fff'; oc.textAlign = 'center'; oc.textBaseline = 'middle';
+    oc.fillText(ch, cw / 2, cch / 2);
+    const d    = oc.getImageData(0, 0, cw, cch).data;
+    const step = Math.max(2, 0 | (fs / 42));
+    const pts  = [];
+    for (let y = 0; y < cch; y += step)
+      for (let x = 0; x < cw; x += step)
+        if (d[(y * cw + x) * 4 + 3] > 110)
+          pts.push([this.cx + x - cw / 2, this.cy + y - cch / 2]);
+    return pts;
+  }
+
+  setChar(ch) {
+    if (ch === this.current) return;
+    this.current = ch;
+    const pts = shuffle(this._sample(ch));
+    if (!pts.length) return;
+    for (const p of this.particles) p.burst();
+    for (let i = 0; i < this.particles.length; i++) {
+      const pt = pts[i % pts.length];
+      this.particles[i].setTarget(pt[0], pt[1]);
     }
   }
-  return particles;
+
+  update() { for (const p of this.particles) p.update(); }
+  draw(hs, pb) { for (const p of this.particles) p.draw(hs, pb); }
 }
 
-// ─── SCENE MANAGER ────────────────────────────────────────────────────────
-let particles  = [];
-let sceneTimer = 0;
-let scenePhase = "appear";   // appear → hold → scatter → gap
-const HOLD_TIME    = 90;   // frames to hold text still
-const SCATTER_TIME = 80;   // frames while scattering
-const GAP_TIME     = 30;   // frames of blank
+// ─── STARS ───────────────────────────────────────────────────────────────────
+const stars = Array.from({ length: 220 }, () => ({
+  x: Math.random(), y: Math.random(),
+  r: 0.3 + Math.random() * 1.4,
+  ph: Math.random() * TAU, spd: 0.005 + Math.random() * 0.02
+}));
 
-let currentColor;
-let flashAlpha  = 0;
-
-function nextScene() {
-  particles  = [];
-  scenePhase = "appear";
-  sceneTimer = 0;
-  currentColor = PALETTE[Math.random() * PALETTE.length | 0];
-
-  const isNum  = Math.random() < 0.4;
-  const text   = isNum ? NUMS() : WORDS[Math.random() * WORDS.length | 0];
-  const cx     = W / 2 + (Math.random() - 0.5) * W * 0.15;
-  const cy     = H / 2 + (Math.random() - 0.5) * H * 0.2;
-
-  particles = textToParticles(text, cx, cy, currentColor);
-  flashAlpha = 0.55;  // trigger flash on new text
-}
-
-// ─── GLITCH LINES ─────────────────────────────────────────────────────────
-let glitchLines = [];
-function spawnGlitch() {
-  for (let i = 0; i < 3 + Math.random() * 5 | 0; i++) {
-    glitchLines.push({
-      y: Math.random() * H,
-      w: 50 + Math.random() * (W * 0.6),
-      x: Math.random() * W,
-      h: 2 + Math.random() * 6,
-      alpha: 0.6 + Math.random() * 0.4,
-      color: PALETTE[Math.random() * PALETTE.length | 0],
-      life: 4 + Math.random() * 10 | 0
-    });
+function drawStars() {
+  ctx.shadowBlur = 5;
+  for (const s of stars) {
+    s.ph += s.spd;
+    ctx.globalAlpha = 0.06 + 0.22 * Math.sin(s.ph);
+    ctx.fillStyle = '#b8d8ff'; ctx.shadowColor = '#6ab2ff';
+    ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, TAU); ctx.fill();
   }
+  ctx.shadowBlur = 0;
 }
 
-// ─── SCANLINE OVERLAY ─────────────────────────────────────────────────────
+// ─── SCANLINES ───────────────────────────────────────────────────────────────
 function drawScanlines() {
-  ctx.save();
-  const spacing = 4;
-  ctx.globalAlpha = 0.04;
-  ctx.fillStyle = "#000";
-  for (let y = 0; y < H; y += spacing) {
-    ctx.fillRect(0, y, W, 1);
-  }
-  ctx.restore();
+  ctx.globalAlpha = 0.025; ctx.fillStyle = '#000'; ctx.shadowBlur = 0;
+  for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
 }
 
-// ─── VIGNETTE ─────────────────────────────────────────────────────────────
+// ─── VIGNETTE ────────────────────────────────────────────────────────────────
+let vig = null;
+function buildVignette() {
+  vig = ctx.createRadialGradient(W/2, H/2, H*0.1, W/2, H/2, H*0.88);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.92)');
+}
 function drawVignette() {
-  const grad = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.85);
-  grad.addColorStop(0, "rgba(0,0,0,0)");
-  grad.addColorStop(1, "rgba(0,0,0,0.72)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
 }
 
-// ─── FLASH ────────────────────────────────────────────────────────────────
-function drawFlash() {
-  if (flashAlpha <= 0) return;
-  ctx.save();
-  ctx.globalAlpha = flashAlpha;
-  ctx.fillStyle   = currentColor || "#fff";
-  ctx.fillRect(0, 0, W, H);
-  ctx.restore();
-  flashAlpha -= 0.07;
-  if (flashAlpha < 0) flashAlpha = 0;
+// ─── LABELS ──────────────────────────────────────────────────────────────────
+const WDAYS  = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+function drawLabels(dateStr, hs) {
+  if (!slots.length) return;
+  const fs0 = slots[0].fontSize;
+  const hue = hs % 360, hue2 = (hs + 180) % 360;
+
+  ctx.globalAlpha = 0.5; ctx.shadowBlur = 12;
+  ctx.shadowColor = `hsl(${hue},70%,60%)`; ctx.fillStyle = `hsl(${hue},55%,80%)`;
+  ctx.font = `300 ${Math.max(11, fs0 * 0.115)}px 'Courier New',monospace`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText(dateStr, W / 2, H / 2 + fs0 * 0.74);
+
+  ctx.globalAlpha = 0.22; ctx.shadowBlur = 8;
+  ctx.shadowColor = `hsl(${hue2},60%,60%)`; ctx.fillStyle = `hsl(${hue2},45%,72%)`;
+  ctx.font = `300 ${Math.max(9, fs0 * 0.09)}px 'Courier New',monospace`;
+  ctx.fillText('P  A  R  T  I  C  L  E    C  L  O  C  K', W / 2, H / 2 - fs0 * 0.83);
 }
 
-// ─── RANDOM SPARKLES ──────────────────────────────────────────────────────
-const sparkles = [];
-function spawnSparkle() {
-  sparkles.push({
-    x: Math.random() * W,
-    y: Math.random() * H,
-    r: 1 + Math.random() * 3,
-    color: PALETTE[Math.random() * PALETTE.length | 0],
-    alpha: 1,
-    decay: 0.05 + Math.random() * 0.08
+// ─── CLOCK ───────────────────────────────────────────────────────────────────
+let slots = [], lastSec = -1, dateStr = '', pulse = 0;
+
+function buildClock() {
+  const fs     = Math.min(H * 0.27, W / 8.5);
+  const charW  = fs * 0.68, colonW = fs * 0.34, gap = fs * 0.07;
+  const total  = 6 * charW + 2 * colonW + 7 * gap;
+  let   curX   = (W - total) / 2;
+  const cy     = H / 2;
+
+  const layout = [
+    { w: charW,  hue: 200, cap: 290 }, { w: charW,  hue: 225, cap: 290 },
+    { w: colonW, hue: 250, cap: 60  }, { w: charW,  hue: 270, cap: 290 },
+    { w: charW,  hue: 295, cap: 290 }, { w: colonW, hue: 325, cap: 60  },
+    { w: charW,  hue: 345, cap: 290 }, { w: charW,  hue: 15,  cap: 290 },
+  ];
+
+  slots = layout.map(l => {
+    const s = new Slot(curX + l.w / 2, cy, fs, l.hue, l.cap);
+    curX += l.w + gap;
+    return s;
   });
+  lastSec = -1;
+  buildVignette();
 }
 
-function updateSparkles() {
-  for (let i = sparkles.length - 1; i >= 0; i--) {
-    const s = sparkles[i];
-    s.alpha -= s.decay;
-    if (s.alpha <= 0) { sparkles.splice(i, 1); continue; }
-
-    // draw sparkle star shape
-    ctx.save();
-    ctx.globalAlpha = s.alpha;
-    ctx.fillStyle   = s.color;
-    ctx.shadowColor = s.color;
-    ctx.shadowBlur  = 8;
-    ctx.beginPath();
-    for (let pt = 0; pt < 4; pt++) {
-      const a = (pt / 4) * Math.PI * 2 - Math.PI / 4;
-      const inner = s.r * 0.3;
-      if (pt === 0) ctx.moveTo(s.x + Math.cos(a) * s.r, s.y + Math.sin(a) * s.r);
-      else ctx.lineTo(s.x + Math.cos(a) * s.r, s.y + Math.sin(a) * s.r);
-      const a2 = a + Math.PI / 4;
-      ctx.lineTo(s.x + Math.cos(a2) * inner, s.y + Math.sin(a2) * inner);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
+function tickClock() {
+  const now = new Date(), sec = now.getSeconds();
+  if (sec === lastSec) return;
+  lastSec = sec; pulse = 1.0;
+  const pad = n => String(n).padStart(2, '0');
+  const hh = pad(now.getHours()), mm = pad(now.getMinutes()), ss = pad(sec);
+  [hh[0], hh[1], ':', mm[0], mm[1], ':', ss[0], ss[1]].forEach((c, i) => slots[i].setChar(c));
+  dateStr = `${WDAYS[now.getDay()]}  ·  ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 }
 
-// ─── HUD UPDATE ───────────────────────────────────────────────────────────
-let frameCount = 0;
-function updateHUD() {
-  const now = new Date();
-  const pad = n => String(n).padStart(2, "0");
-  document.getElementById("hud-time").textContent =
-    `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-  document.getElementById("hud-frame").textContent =
-    `FRAME ${String(frameCount).padStart(6, "0")}`;
-}
-
-// ─── MAIN LOOP ─────────────────────────────────────────────────────────────
-let glitchCountdown = 60;
-let sparkleCountdown = 3;
-
-nextScene();
+// ─── LOOP ────────────────────────────────────────────────────────────────────
+let hueShift = 0;
+buildClock(); tickClock();
+window.addEventListener('resize', () => { resize(); buildClock(); tickClock(); });
 
 function loop() {
-  frameCount++;
-  ctx.clearRect(0, 0, W, H);
-  drawRain();
+  hueShift = (hueShift + 0.22) % 360;
+  pulse    = Math.max(0, pulse - 0.035);
 
-  // ── flash
-  drawFlash();
+  ctx.globalAlpha = 0.80; ctx.shadowBlur = 0;
+  ctx.fillStyle = '#00000d'; ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
 
-  // ── glitch
-  glitchCountdown--;
-  if (glitchCountdown <= 0) {
-    spawnGlitch();
-    glitchCountdown = 40 + Math.random() * 80 | 0;
-    flashAlpha = Math.max(flashAlpha, 0.2);
-  }
-  for (let i = glitchLines.length - 1; i >= 0; i--) {
-    const g = glitchLines[i];
-    ctx.save();
-    ctx.globalAlpha = g.alpha * (g.life / 10);
-    ctx.fillStyle   = g.color;
-    ctx.shadowColor = g.color;
-    ctx.shadowBlur  = 6;
-    ctx.fillRect(g.x, g.y, g.w, g.h);
-    ctx.restore();
-    g.life--;
-    if (g.life <= 0) glitchLines.splice(i, 1);
-  }
+  drawStars();
+  tickClock();
 
-  // ── sparkles
-  sparkleCountdown--;
-  if (sparkleCountdown <= 0) {
-    const n = 1 + Math.random() * 3 | 0;
-    for (let i = 0; i < n; i++) spawnSparkle();
-    sparkleCountdown = 2 + Math.random() * 5 | 0;
-  }
-  updateSparkles();
-
-  // ── particles
-  sceneTimer++;
-
-  if (scenePhase === "appear") {
-    if (sceneTimer >= HOLD_TIME) {
-      scenePhase = "scatter";
-      sceneTimer = 0;
-      for (const p of particles) p.scatter();
-    }
-  } else if (scenePhase === "scatter") {
-    if (sceneTimer >= SCATTER_TIME) {
-      scenePhase = "gap";
-      sceneTimer = 0;
-    }
-  } else if (scenePhase === "gap") {
-    if (sceneTimer >= GAP_TIME) nextScene();
-  }
-
-  // draw and update each particle
   ctx.save();
-  ctx.shadowBlur = 6;
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    ctx.shadowColor = p.color;
-    p.update();
-    p.draw(ctx);
-    if (!p.alive) particles.splice(i, 1);
-  }
+  const pb = pulse * 20;
+  for (const s of slots) { s.update(); s.draw(hueShift, pb); }
   ctx.restore();
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
 
-  // ── overlays
+  drawLabels(dateStr, hueShift);
   drawScanlines();
   drawVignette();
-
-  // ── HUD
-  if (frameCount % 10 === 0) updateHUD();
-
   requestAnimationFrame(loop);
 }
-
 loop();
 </script>
 </body>
