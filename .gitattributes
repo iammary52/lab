@@ -1,0 +1,3 @@
+# Reduce PR merge conflicts for the single-page demo by preferring line-union merges.
+# This keeps both sides when concurrent edits happen in index.html.
+index.html merge=union
