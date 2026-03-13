@@ -3,258 +3,450 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Particle Clock</title>
+  <title>Gotham Grid Clock</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #000; overflow: hidden; }
+
+    :root {
+      --panel-bg: rgba(10, 14, 22, 0.74);
+      --panel-line: rgba(161, 182, 221, 0.26);
+      --text-muted: rgba(182, 198, 226, 0.74);
+      --text-strong: rgba(224, 234, 252, 0.95);
+      --accent: #90aacd;
+    }
+
+    body {
+      background: radial-gradient(circle at 52% 34%, #182131 0%, #0b111c 56%, #060910 100%);
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text-strong);
+    }
+
     canvas { display: block; }
+
+    .hud {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(300px, calc(100vw - 44px));
+      border: 1px solid var(--panel-line);
+      border-radius: 14px;
+      background: var(--panel-bg);
+      box-shadow: 0 18px 52px rgba(0, 0, 0, 0.55), inset 0 0 40px rgba(135, 160, 198, 0.08);
+      backdrop-filter: blur(7px);
+      padding: 16px 14px;
+    }
+
+    .hud__title {
+      font-family: "Orbitron", "Bank Gothic", "Eurostile", "Rajdhani", sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.26em;
+      color: rgba(198, 214, 240, 0.92);
+      margin-bottom: 4px;
+    }
+
+    .hud__subtitle {
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      color: rgba(152, 169, 198, 0.78);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .menu {
+      display: grid;
+      gap: 8px;
+    }
+
+    .menu button {
+      border: 1px solid rgba(148, 171, 209, 0.24);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: rgba(15, 21, 33, 0.72);
+      color: var(--text-muted);
+      font-family: "Orbitron", "Bank Gothic", "Eurostile", "Rajdhani", sans-serif;
+      letter-spacing: 0.14em;
+      text-align: left;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 160ms ease;
+    }
+
+    .menu button:hover {
+      color: var(--text-strong);
+      border-color: rgba(167, 191, 231, 0.5);
+      background: rgba(22, 30, 45, 0.82);
+      transform: translateX(2px);
+    }
+
+    .menu button.is-active {
+      color: #eef5ff;
+      border-color: rgba(195, 215, 247, 0.7);
+      background: linear-gradient(95deg, rgba(75, 97, 128, 0.44), rgba(30, 42, 62, 0.9));
+      box-shadow: inset 0 0 18px rgba(174, 198, 233, 0.16);
+    }
   </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+  <aside class="hud">
+    <div class="hud__title">WAYNE TERMINAL</div>
+    <div class="hud__subtitle">district interface</div>
+    <nav class="menu" id="menu"></nav>
+  </aside>
+  <canvas id="c"></canvas>
+
 <script>
 const canvas = document.getElementById('c');
-const ctx    = canvas.getContext('2d');
-const TAU    = Math.PI * 2;
+const ctx = canvas.getContext('2d');
+const menu = document.getElementById('menu');
 
-let W, H;
-function resize() {
-  W = canvas.width  = window.innerWidth;
-  H = canvas.height = window.innerHeight;
+const MENU_ITEMS = [
+  { id: 'clock', label: 'Clock Grid', description: 'Live city chrono matrix' },
+  { id: 'cases', label: 'Caseboard', description: 'Reserved module slot' },
+  { id: 'transit', label: 'Transit', description: 'Reserved module slot' }
+];
+
+let activeView = 'cases';
+
+function setView(viewId) {
+  activeView = viewId;
+  renderMenu();
 }
-resize();
 
-function rand(n)  { return Math.random() * (n == null ? 1 : n); }
-function randn()  { return Math.random() - 0.5; }
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = 0 | (Math.random() * (i + 1));
-    const t = a[i]; a[i] = a[j]; a[j] = t;
+function renderMenu() {
+  menu.innerHTML = '';
+  for (const item of MENU_ITEMS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = item.label;
+    btn.title = item.description;
+    if (item.id === activeView) btn.classList.add('is-active');
+    btn.addEventListener('click', () => setView(item.id));
+    menu.appendChild(btn);
   }
-  return a;
 }
 
-// ─── PARTICLE ────────────────────────────────────────────────────────────────
-class Particle {
-  constructor(baseHue) {
-    this.baseHue  = baseHue;
-    this.x        = W * 0.5 + randn() * W * 0.4;
-    this.y        = H * 0.5 + randn() * H * 0.4;
-    this.vx       = 0;
-    this.vy       = 0;
-    this.tx       = this.x;
-    this.ty       = this.y;
-    this.phase    = rand(TAU);
-    this.phaseSpd = 0.038 + rand(0.10);
-    this.size     = 1.2 + rand(1.9);
+let W = 0, H = 0;
+const DEPTH = 8;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  buildClock();
+  buildVignette();
+}
+
+function rand(n = 1) { return Math.random() * n; }
+
+class Voxel {
+  constructor(tone) {
+    this.tone = tone;
+    this.x = W * 0.5 + (Math.random() - 0.5) * W * 0.2;
+    this.y = H * 0.5 + (Math.random() - 0.5) * H * 0.2;
+    this.z = rand(DEPTH);
+    this.tx = this.x;
+    this.ty = this.y;
+    this.tz = this.z;
+    this.vx = 0;
+    this.vy = 0;
+    this.vz = 0;
   }
 
   burst() {
-    const a = rand(TAU);
-    const s = 5 + rand(18);
-    this.vx += Math.cos(a) * s;
-    this.vy += Math.sin(a) * s;
+    this.vx += (Math.random() - 0.5) * 14;
+    this.vy += (Math.random() - 0.5) * 14;
+    this.vz += (Math.random() - 0.5) * 4;
   }
 
-  setTarget(tx, ty) { this.tx = tx; this.ty = ty; }
+  setTarget(x, y, z) {
+    this.tx = x;
+    this.ty = y;
+    this.tz = z;
+  }
 
   update() {
-    const dx = this.tx - this.x;
-    const dy = this.ty - this.y;
-    this.vx   = this.vx * 0.80 + dx * 0.12;
-    this.vy   = this.vy * 0.80 + dy * 0.12;
-    this.x   += this.vx;
-    this.y   += this.vy;
-    this.phase += this.phaseSpd;
+    this.vx = this.vx * 0.73 + (this.tx - this.x) * 0.22;
+    this.vy = this.vy * 0.73 + (this.ty - this.y) * 0.22;
+    this.vz = this.vz * 0.72 + (this.tz - this.z) * 0.18;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.z += this.vz;
   }
 
-  draw(hueShift, pulseBoost) {
-    const b   = 0.5 + 0.5 * Math.sin(this.phase);
-    const hue = (this.baseHue + hueShift) % 360;
-    const lit = 42 + b * 55;
-    const alp = 0.45 + b * 0.55;
-    const r   = this.size * (0.6 + b * 0.7);
-    ctx.globalAlpha = alp;
-    ctx.fillStyle   = `hsl(${hue},100%,${lit}%)`;
-    ctx.shadowColor = `hsl(${hue},100%,78%)`;
-    ctx.shadowBlur  = 4 + b * 12 + pulseBoost * b;
+  draw(cell, pulse) {
+    const z = this.z;
+    const lift = z * 0.9;
+    const px = this.x + z * 0.85;
+    const py = this.y - lift;
+    const size = cell * 0.72;
+
+    const light = 58 + z * 2.2 + pulse * 4.4;
+    const sat = 16 + this.tone * 9;
+
+    ctx.globalAlpha = 0.56;
+    ctx.fillStyle = `hsl(212, ${sat}%, ${Math.min(82, light + 12)}%)`;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, r, 0, TAU);
+    ctx.moveTo(px, py - size * 0.5);
+    ctx.lineTo(px + size * 0.44, py - size * 0.26);
+    ctx.lineTo(px, py);
+    ctx.lineTo(px - size * 0.44, py - size * 0.26);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.globalAlpha = 0.82;
+    ctx.fillStyle = `hsl(214, ${sat}%, ${Math.min(74, light)}%)`;
+    ctx.beginPath();
+    ctx.moveTo(px - size * 0.44, py - size * 0.26);
+    ctx.lineTo(px, py);
+    ctx.lineTo(px, py + size * 0.52);
+    ctx.lineTo(px - size * 0.44, py + size * 0.26);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.globalAlpha = 0.77;
+    ctx.fillStyle = `hsl(221, ${sat}%, ${Math.max(24, light - 18)}%)`;
+    ctx.beginPath();
+    ctx.moveTo(px + size * 0.44, py - size * 0.26);
+    ctx.lineTo(px, py);
+    ctx.lineTo(px, py + size * 0.52);
+    ctx.lineTo(px + size * 0.44, py + size * 0.26);
+    ctx.closePath();
     ctx.fill();
   }
 }
 
-// ─── SLOT ────────────────────────────────────────────────────────────────────
-const FONT_STACK = "'Arial Black','Impact',Arial,sans-serif";
+const FONT_STACK = "'Arial Black','Inter',sans-serif";
 
 class Slot {
-  constructor(cx, cy, fontSize, baseHue, capacity) {
-    this.cx        = cx;
-    this.cy        = cy;
-    this.fontSize  = fontSize;
-    this.current   = null;
-    this.particles = [];
-    for (let i = 0; i < capacity; i++)
-      this.particles.push(new Particle(baseHue + randn() * 28));
+  constructor(cx, cy, size, capacity, isColon = false) {
+    this.cx = cx;
+    this.cy = cy;
+    this.fontSize = size;
+    this.capacity = capacity;
+    this.isColon = isColon;
+    this.current = null;
+    this.voxels = Array.from({ length: capacity }, (_, i) => new Voxel((i % 4) / 4));
+    this.cell = Math.max(6, Math.floor(size / 11));
   }
 
-  _sample(ch) {
-    const fs  = this.fontSize;
-    const cw  = Math.ceil(fs * 0.78) + 24;
-    const cch = Math.ceil(fs * 1.32) + 24;
+  sampleChar(ch) {
+    const fs = this.fontSize;
+    const cw = Math.ceil(fs * (this.isColon ? 0.48 : 0.84)) + 36;
+    const chh = Math.ceil(fs * 1.36) + 36;
     const off = document.createElement('canvas');
-    off.width = cw; off.height = cch;
-    const oc  = off.getContext('2d');
-    oc.font   = `900 ${fs}px ${FONT_STACK}`;
-    oc.fillStyle = '#fff'; oc.textAlign = 'center'; oc.textBaseline = 'middle';
-    oc.fillText(ch, cw / 2, cch / 2);
-    const d    = oc.getImageData(0, 0, cw, cch).data;
-    const step = Math.max(2, 0 | (fs / 42));
-    const pts  = [];
-    for (let y = 0; y < cch; y += step)
-      for (let x = 0; x < cw; x += step)
-        if (d[(y * cw + x) * 4 + 3] > 110)
-          pts.push([this.cx + x - cw / 2, this.cy + y - cch / 2]);
+    off.width = cw;
+    off.height = chh;
+    const octx = off.getContext('2d');
+    octx.fillStyle = '#fff';
+    octx.font = `900 ${fs}px ${FONT_STACK}`;
+    octx.textAlign = 'center';
+    octx.textBaseline = 'middle';
+    octx.fillText(ch, cw / 2, chh / 2);
+
+    const data = octx.getImageData(0, 0, cw, chh).data;
+    const pts = [];
+    const step = this.cell;
+
+    for (let y = 0; y < chh; y += step) {
+      for (let x = 0; x < cw; x += step) {
+        const a = data[(y * cw + x) * 4 + 3];
+        if (a > 120) {
+          pts.push({
+            x: this.cx + x - cw / 2,
+            y: this.cy + y - chh / 2,
+            z: Math.floor(((y / chh) * DEPTH + rand(1.2)))
+          });
+        }
+      }
+    }
     return pts;
   }
 
   setChar(ch) {
     if (ch === this.current) return;
     this.current = ch;
-    const pts = shuffle(this._sample(ch));
-    if (!pts.length) return;
-    for (const p of this.particles) p.burst();
-    for (let i = 0; i < this.particles.length; i++) {
-      const pt = pts[i % pts.length];
-      this.particles[i].setTarget(pt[0], pt[1]);
+    const points = this.sampleChar(ch);
+    if (!points.length) return;
+
+    for (const voxel of this.voxels) voxel.burst();
+    for (let i = 0; i < this.voxels.length; i++) {
+      const p = points[i % points.length];
+      this.voxels[i].setTarget(p.x, p.y, p.z);
     }
   }
 
-  update() { for (const p of this.particles) p.update(); }
-  draw(hs, pb) { for (const p of this.particles) p.draw(hs, pb); }
-}
+  update() { for (const voxel of this.voxels) voxel.update(); }
 
-// ─── STARS ───────────────────────────────────────────────────────────────────
-const stars = Array.from({ length: 220 }, () => ({
-  x: Math.random(), y: Math.random(),
-  r: 0.3 + Math.random() * 1.4,
-  ph: Math.random() * TAU, spd: 0.005 + Math.random() * 0.02
-}));
-
-function drawStars() {
-  ctx.shadowBlur = 5;
-  for (const s of stars) {
-    s.ph += s.spd;
-    ctx.globalAlpha = 0.06 + 0.22 * Math.sin(s.ph);
-    ctx.fillStyle = '#b8d8ff'; ctx.shadowColor = '#6ab2ff';
-    ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, TAU); ctx.fill();
+  draw(pulse) {
+    const sorted = this.voxels.slice().sort((a, b) => a.z - b.z);
+    for (const voxel of sorted) voxel.draw(this.cell, pulse);
   }
-  ctx.shadowBlur = 0;
 }
 
-// ─── SCANLINES ───────────────────────────────────────────────────────────────
-function drawScanlines() {
-  ctx.globalAlpha = 0.025; ctx.fillStyle = '#000'; ctx.shadowBlur = 0;
-  for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+let gridShift = 0;
+function drawGrid() {
+  const major = Math.max(38, Math.floor(Math.min(W, H) / 18));
+  const minor = Math.floor(major / 2);
+
+  ctx.globalAlpha = 0.24;
+  ctx.strokeStyle = 'rgba(125, 148, 188, 0.18)';
+  ctx.lineWidth = 1;
+  for (let x = (gridShift % major) - major; x < W + major; x += major) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = (gridShift * 0.58 % major) - major; y < H + major; y += major) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  ctx.globalAlpha = 0.09;
+  ctx.strokeStyle = 'rgba(165, 186, 220, 0.16)';
+  for (let x = (gridShift % minor) - minor; x < W + minor; x += minor) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = (gridShift * 0.48 % minor) - minor; y < H + minor; y += minor) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
 }
 
-// ─── VIGNETTE ────────────────────────────────────────────────────────────────
-let vig = null;
+let vignette;
 function buildVignette() {
-  vig = ctx.createRadialGradient(W/2, H/2, H*0.1, W/2, H/2, H*0.88);
-  vig.addColorStop(0, 'rgba(0,0,0,0)');
-  vig.addColorStop(1, 'rgba(0,0,0,0.92)');
+  vignette = ctx.createRadialGradient(W / 2, H / 2, H * 0.13, W / 2, H / 2, H * 0.82);
+  vignette.addColorStop(0, 'rgba(8,11,19,0.02)');
+  vignette.addColorStop(1, 'rgba(4,5,9,0.9)');
 }
+
 function drawVignette() {
-  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
-  ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, W, H);
 }
 
-// ─── LABELS ──────────────────────────────────────────────────────────────────
-const WDAYS  = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const WDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+let dateStr = '';
 
-function drawLabels(dateStr, hs) {
+function drawLabels() {
   if (!slots.length) return;
-  const fs0 = slots[0].fontSize;
-  const hue = hs % 360, hue2 = (hs + 180) % 360;
+  const fs = slots[0].fontSize;
+  ctx.textAlign = 'center';
 
-  ctx.globalAlpha = 0.5; ctx.shadowBlur = 12;
-  ctx.shadowColor = `hsl(${hue},70%,60%)`; ctx.fillStyle = `hsl(${hue},55%,80%)`;
-  ctx.font = `300 ${Math.max(11, fs0 * 0.115)}px 'Courier New',monospace`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  ctx.fillText(dateStr, W / 2, H / 2 + fs0 * 0.74);
+  ctx.globalAlpha = 0.8;
+  ctx.fillStyle = 'rgba(206,219,241,0.9)';
+  ctx.font = `600 ${Math.max(12, fs * 0.1)}px Inter, 'Segoe UI', sans-serif`;
+  ctx.fillText(dateStr, W / 2, H / 2 + fs * 0.77);
 
-  ctx.globalAlpha = 0.22; ctx.shadowBlur = 8;
-  ctx.shadowColor = `hsl(${hue2},60%,60%)`; ctx.fillStyle = `hsl(${hue2},45%,72%)`;
-  ctx.font = `300 ${Math.max(9, fs0 * 0.09)}px 'Courier New',monospace`;
-  ctx.fillText('P  A  R  T  I  C  L  E    C  L  O  C  K', W / 2, H / 2 - fs0 * 0.83);
+  ctx.globalAlpha = 0.34;
+  ctx.fillStyle = 'rgba(158,176,208,0.9)';
+  ctx.font = `500 ${Math.max(10, fs * 0.072)}px "Orbitron", "Eurostile", sans-serif`;
+  ctx.fillText('GOTHAM GRID CLOCK', W / 2, H / 2 - fs * 0.87);
 }
 
-// ─── CLOCK ───────────────────────────────────────────────────────────────────
-let slots = [], lastSec = -1, dateStr = '', pulse = 0;
+function drawModulePlaceholder() {
+  const midX = W * 0.52;
+  const midY = H * 0.53;
+  ctx.textAlign = 'center';
+
+  ctx.globalAlpha = 0.86;
+  ctx.fillStyle = 'rgba(198,214,242,0.9)';
+  ctx.font = `700 ${Math.max(24, Math.min(W, H) * 0.052)}px "Orbitron", "Eurostile", sans-serif`;
+  ctx.fillText('SYSTEM MODULE LOCKED', midX, midY - 20);
+
+  ctx.globalAlpha = 0.56;
+  ctx.fillStyle = 'rgba(158,177,214,0.84)';
+  ctx.font = `500 ${Math.max(12, Math.min(W, H) * 0.018)}px Inter, sans-serif`;
+  ctx.fillText('Select CLOCK GRID from upper-left panel to activate chrono display.', midX, midY + 24);
+
+  ctx.globalAlpha = 0.4;
+  ctx.strokeStyle = 'rgba(148, 171, 212, 0.5)';
+  ctx.lineWidth = 1.2;
+  const bw = Math.min(760, W * 0.62);
+  const bh = Math.max(90, H * 0.18);
+  ctx.strokeRect(midX - bw / 2, midY - bh / 2, bw, bh);
+}
+
+let slots = [];
+let lastSec = -1;
+let pulse = 0;
 
 function buildClock() {
-  const fs     = Math.min(H * 0.27, W / 8.5);
-  const charW  = fs * 0.68, colonW = fs * 0.34, gap = fs * 0.07;
-  const total  = 6 * charW + 2 * colonW + 7 * gap;
-  let   curX   = (W - total) / 2;
-  const cy     = H / 2;
+  const fs = Math.min(H * 0.29, W / 8.2);
+  const charW = fs * 0.7;
+  const colonW = fs * 0.36;
+  const gap = fs * 0.07;
+  const total = charW * 6 + colonW * 2 + gap * 7;
+  let x = (W - total) / 2;
+  const cy = H / 2;
 
   const layout = [
-    { w: charW,  hue: 200, cap: 290 }, { w: charW,  hue: 225, cap: 290 },
-    { w: colonW, hue: 250, cap: 60  }, { w: charW,  hue: 270, cap: 290 },
-    { w: charW,  hue: 295, cap: 290 }, { w: colonW, hue: 325, cap: 60  },
-    { w: charW,  hue: 345, cap: 290 }, { w: charW,  hue: 15,  cap: 290 },
+    { w: charW, cap: 210, colon: false },
+    { w: charW, cap: 210, colon: false },
+    { w: colonW, cap: 56, colon: true },
+    { w: charW, cap: 210, colon: false },
+    { w: charW, cap: 210, colon: false },
+    { w: colonW, cap: 56, colon: true },
+    { w: charW, cap: 210, colon: false },
+    { w: charW, cap: 210, colon: false }
   ];
 
-  slots = layout.map(l => {
-    const s = new Slot(curX + l.w / 2, cy, fs, l.hue, l.cap);
-    curX += l.w + gap;
+  slots = layout.map(item => {
+    const s = new Slot(x + item.w / 2, cy, fs, item.cap, item.colon);
+    x += item.w + gap;
     return s;
   });
+
   lastSec = -1;
-  buildVignette();
 }
 
 function tickClock() {
-  const now = new Date(), sec = now.getSeconds();
+  const now = new Date();
+  const sec = now.getSeconds();
   if (sec === lastSec) return;
-  lastSec = sec; pulse = 1.0;
+
+  pulse = 1;
+  lastSec = sec;
+
   const pad = n => String(n).padStart(2, '0');
-  const hh = pad(now.getHours()), mm = pad(now.getMinutes()), ss = pad(sec);
-  [hh[0], hh[1], ':', mm[0], mm[1], ':', ss[0], ss[1]].forEach((c, i) => slots[i].setChar(c));
-  dateStr = `${WDAYS[now.getDay()]}  ·  ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  const hh = pad(now.getHours());
+  const mm = pad(now.getMinutes());
+  const ss = pad(sec);
+  const chars = [hh[0], hh[1], ':', mm[0], mm[1], ':', ss[0], ss[1]];
+  for (let i = 0; i < slots.length; i++) slots[i].setChar(chars[i]);
+  dateStr = `${WDAYS[now.getDay()]} · ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 }
 
-// ─── LOOP ────────────────────────────────────────────────────────────────────
-let hueShift = 0;
-buildClock(); tickClock();
-window.addEventListener('resize', () => { resize(); buildClock(); tickClock(); });
+function drawClockView() {
+  tickClock();
+  for (const slot of slots) {
+    slot.update();
+    slot.draw(pulse);
+  }
+  drawLabels();
+}
 
 function loop() {
-  hueShift = (hueShift + 0.22) % 360;
-  pulse    = Math.max(0, pulse - 0.035);
+  gridShift += 0.13;
+  pulse = Math.max(0, pulse - 0.03);
 
-  ctx.globalAlpha = 0.80; ctx.shadowBlur = 0;
-  ctx.fillStyle = '#00000d'; ctx.fillRect(0, 0, W, H);
   ctx.globalAlpha = 1;
+  ctx.fillStyle = '#070b12';
+  ctx.fillRect(0, 0, W, H);
 
-  drawStars();
-  tickClock();
+  drawGrid();
 
   ctx.save();
-  const pb = pulse * 20;
-  for (const s of slots) { s.update(); s.draw(hueShift, pb); }
+  if (activeView === 'clock') drawClockView();
+  else drawModulePlaceholder();
   ctx.restore();
-  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
 
-  drawLabels(dateStr, hueShift);
-  drawScanlines();
   drawVignette();
   requestAnimationFrame(loop);
 }
+
+window.addEventListener('resize', resize);
+renderMenu();
+resize();
+tickClock();
 loop();
 </script>
 </body>
