@@ -6,20 +6,21 @@
     <title>lab feed</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;650;800&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@500;650;800;900&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet" />
     <style>
 :root {
   color-scheme: light;
-  --ink: #171717;
-  --muted: #6a6a70;
-  --paper: #fbfaf6;
-  --line: rgba(23, 23, 23, 0.12);
-  --acid: #caff34;
-  --pink: #ff5aa5;
-  --cyan: #48d6ff;
-  --orange: #ff8b3d;
-  --violet: #8a6dff;
-  --shadow: 0 22px 64px rgba(23, 23, 23, 0.18);
+  --ink: #111115;
+  --muted: #67616d;
+  --paper: #fff7ea;
+  --panel: rgba(255, 255, 255, 0.72);
+  --line: rgba(17, 17, 21, 0.14);
+  --lime: #d7ff2f;
+  --pink: #ff4fb8;
+  --cyan: #30d8ff;
+  --orange: #ff8a2a;
+  --blue: #5468ff;
+  --shadow: 0 16px 42px rgba(17, 17, 21, 0.18);
 }
 
 * {
@@ -31,94 +32,123 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background:
-    linear-gradient(115deg, rgba(202, 255, 52, 0.18), transparent 30%),
-    linear-gradient(245deg, rgba(255, 90, 165, 0.16), transparent 34%),
-    var(--paper);
+    radial-gradient(circle at 9% 8%, rgba(215, 255, 47, 0.5) 0 13%, transparent 29%),
+    radial-gradient(circle at 93% 4%, rgba(255, 79, 184, 0.42) 0 12%, transparent 30%),
+    radial-gradient(circle at 18% 72%, rgba(48, 216, 255, 0.36) 0 14%, transparent 31%),
+    linear-gradient(135deg, #fff9ea 0%, #f7f3ff 52%, #fff0f8 100%);
   color: var(--ink);
   font-family: Inter, "Noto Sans KR", system-ui, sans-serif;
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.24;
+  background-image:
+    linear-gradient(45deg, rgba(17, 17, 21, 0.08) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(17, 17, 21, 0.08) 25%, transparent 25%);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 72%);
+}
+
 button,
+input,
 textarea {
   font: inherit;
 }
 
-.shell {
-  width: min(100%, 520px);
-  min-height: 100vh;
-  margin: 0 auto;
-  padding: calc(env(safe-area-inset-top) + 18px) 16px 28px;
+button {
+  cursor: pointer;
 }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 18px;
+.shell {
+  position: relative;
+  width: min(100%, 540px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 16px) 14px 34px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .eyebrow {
-  margin: 0 0 2px;
-  font-size: 11px;
-  font-weight: 800;
+  width: fit-content;
+  margin: 0 0 3px;
+  padding: 5px 8px 4px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--lime);
+  box-shadow: 3px 3px 0 var(--ink);
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 900;
   line-height: 1;
   letter-spacing: 0;
   text-transform: uppercase;
-  color: var(--pink);
 }
 
 h1 {
   margin: 0;
-  font-size: 38px;
-  line-height: 0.94;
+  font-family: "Archivo Black", Inter, "Noto Sans KR", sans-serif;
+  font-size: clamp(44px, 14vw, 74px);
+  line-height: 0.78;
   letter-spacing: 0;
-  font-weight: 900;
+  text-transform: lowercase;
+  text-shadow: 2px 2px 0 #fff, 5px 5px 0 rgba(255, 79, 184, 0.55);
 }
 
-.icon-button {
-  width: 50px;
-  height: 50px;
-  border: 1px solid var(--line);
+.round-button {
+  width: 58px;
+  height: 58px;
+  border: 1px solid var(--ink);
   border-radius: 50%;
-  background: var(--ink);
-  color: var(--acid);
-  box-shadow: 0 12px 26px rgba(23, 23, 23, 0.2);
-}
-
-.icon-button span {
-  display: block;
-  font-size: 25px;
-  transform: translateY(-1px);
+  background: conic-gradient(from 90deg, var(--lime), var(--cyan), var(--pink), var(--orange), var(--lime));
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  box-shadow: 5px 5px 0 var(--ink), 0 15px 30px rgba(17, 17, 21, 0.18);
 }
 
 .composer {
   display: grid;
-  grid-template-columns: 108px minmax(0, 1fr);
-  gap: 12px;
-  min-height: 142px;
-  margin-bottom: 18px;
-  padding: 10px;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 9px;
   border: 1px solid var(--line);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.66);
-  box-shadow: 0 14px 44px rgba(23, 23, 23, 0.09);
-  backdrop-filter: blur(18px);
+  border-radius: 22px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px) saturate(1.2);
 }
 
 .dropzone {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 122px;
+  min-height: 116px;
   overflow: hidden;
+  border: 1px solid var(--ink);
   border-radius: 18px;
   background:
-    linear-gradient(135deg, var(--acid), var(--cyan) 52%, var(--pink));
+    linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent),
+    conic-gradient(from 160deg, var(--lime), var(--cyan), var(--blue), var(--pink), var(--orange), var(--lime));
   color: var(--ink);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
+  line-height: 0.95;
+  text-align: center;
   text-transform: uppercase;
+  box-shadow: 3px 3px 0 var(--ink);
 }
 
 .dropzone input {
@@ -147,26 +177,63 @@ h1 {
 
 .composer-copy {
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: minmax(56px, 1fr) auto auto;
   min-width: 0;
+  gap: 8px;
 }
 
 textarea {
   width: 100%;
-  min-height: 82px;
-  padding: 10px 8px;
+  min-height: 60px;
+  padding: 8px 4px;
   resize: none;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--ink);
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1.25;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.18;
 }
 
-textarea::placeholder {
-  color: rgba(23, 23, 23, 0.36);
+textarea::placeholder,
+.search-box input::placeholder {
+  color: rgba(17, 17, 21, 0.38);
+}
+
+.mood-row,
+.segmented {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mood-row::-webkit-scrollbar,
+.segmented::-webkit-scrollbar {
+  display: none;
+}
+
+.mood-chip,
+.sort-chip {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mood-chip.is-active,
+.sort-chip.is-active {
+  background: var(--pink);
+  color: #fff;
+  box-shadow: 2px 2px 0 var(--ink);
 }
 
 .composer-actions {
@@ -177,78 +244,170 @@ textarea::placeholder {
 }
 
 #statusText {
-  min-height: 18px;
+  min-height: 17px;
   margin: 0;
   overflow: hidden;
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 #saveButton {
-  min-width: 76px;
-  height: 38px;
-  border: 0;
+  min-width: 70px;
+  height: 34px;
+  border: 1px solid var(--ink);
   border-radius: 999px;
   background: var(--ink);
   color: #fff;
   font-weight: 900;
-  box-shadow: 0 10px 24px rgba(23, 23, 23, 0.18);
+  box-shadow: 3px 3px 0 var(--orange);
 }
 
 #saveButton:disabled {
   opacity: 0.48;
 }
 
+.controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.search-box {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(14px);
+}
+
+.search-box span {
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.search-box input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ticker {
+  display: flex;
+  gap: 8px;
+  margin: 0 -14px 12px;
+  padding: 8px 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ticker::-webkit-scrollbar {
+  display: none;
+}
+
+.ticker span {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0 var(--lime);
+}
+
 .stage {
-  position: relative;
-  min-height: calc(100vh - 238px);
-  padding-bottom: 70px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+  padding-bottom: 80px;
 }
 
 .post-card {
   position: relative;
+  min-width: 0;
   touch-action: none;
   user-select: none;
-  width: min(82vw, 390px);
-  margin: 0 0 16px;
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  background: #fff;
-  box-shadow: var(--shadow);
-  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) rotate(var(--rot, 0deg));
-  transition: transform 420ms cubic-bezier(0.18, 1.2, 0.22, 1), box-shadow 220ms ease, filter 220ms ease;
+  border: 1px solid rgba(17, 17, 21, 0.16);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 10px 26px rgba(17, 17, 21, 0.13);
+  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+  transition: transform 440ms cubic-bezier(0.18, 1.2, 0.22, 1), box-shadow 220ms ease, filter 220ms ease;
   will-change: transform;
 }
 
-.post-card:nth-child(2n) {
-  margin-left: auto;
+.post-card:nth-child(3n + 1) {
+  margin-top: 18px;
 }
 
-.post-card:nth-child(3n) {
-  margin-left: 8%;
+.post-card:nth-child(4n) {
+  margin-top: -4px;
 }
 
 .post-card.is-dragging {
   z-index: 20;
-  filter: saturate(1.14);
-  box-shadow: 0 30px 78px rgba(23, 23, 23, 0.28);
+  filter: saturate(1.18) contrast(1.04);
+  box-shadow: 0 22px 54px rgba(17, 17, 21, 0.28);
   transition: box-shadow 180ms ease, filter 180ms ease;
+}
+
+.post-card.is-hot {
+  --scale: 1.045;
+  z-index: 12;
 }
 
 .post-card.is-new {
   animation: pop-in 620ms cubic-bezier(0.18, 1.2, 0.22, 1) both;
 }
 
+.like-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(17, 17, 21, 0.35);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  backdrop-filter: blur(8px);
+}
+
+.post-card.is-liked .like-button {
+  background: var(--lime);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
 .media-wrap {
-  aspect-ratio: 4 / 5;
-  margin: 8px;
+  aspect-ratio: 1 / 1;
+  margin: 6px;
   overflow: hidden;
-  border-radius: 22px;
+  border-radius: 16px;
   background:
-    linear-gradient(135deg, rgba(72, 214, 255, 0.36), rgba(255, 139, 61, 0.26)),
+    linear-gradient(135deg, rgba(48, 216, 255, 0.5), rgba(255, 138, 42, 0.32)),
     #ece9e0;
 }
 
@@ -261,33 +420,46 @@ textarea::placeholder {
 
 .post-meta {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 10px;
-  padding: 4px 16px 16px;
+  gap: 8px;
+  padding: 2px 10px 11px;
 }
 
 .post-message {
+  display: -webkit-box;
+  min-height: 36px;
   margin: 0;
-  min-width: 0;
-  font-size: 20px;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 15px;
   font-weight: 900;
-  line-height: 1.18;
+  line-height: 1.15;
   overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-.post-date {
+.post-date,
+.post-mood {
+  margin: 0;
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.post-mood {
+  color: var(--pink);
 }
 
 .empty {
+  grid-column: 1 / -1;
   display: grid;
   place-items: center;
-  min-height: 260px;
-  color: rgba(23, 23, 23, 0.44);
+  min-height: 220px;
+  border: 1px dashed rgba(17, 17, 21, 0.28);
+  border-radius: 24px;
+  color: rgba(17, 17, 21, 0.44);
   font-size: 15px;
   font-weight: 900;
 }
@@ -295,21 +467,21 @@ textarea::placeholder {
 @keyframes pop-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 24px, 0) scale(0.94) rotate(-2deg);
+    transform: translate3d(0, 24px, 0) scale(0.86) rotate(-4deg);
   }
   to {
     opacity: 1;
-    transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(1) rotate(var(--rot, 0deg));
+    transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(var(--scale, 1)) rotate(var(--rot, 0deg));
   }
 }
 
 @media (min-width: 700px) {
   .shell {
-    padding-top: 30px;
+    padding-top: 26px;
   }
 
   .stage {
-    min-height: 680px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -317,24 +489,27 @@ textarea::placeholder {
   </head>
   <body>
     <main class="shell">
-      <header class="topbar">
+      <header class="hero">
         <div>
-          <p class="eyebrow">blank</p>
+          <p class="eyebrow">drop zone</p>
           <h1>lab feed</h1>
         </div>
-        <button class="icon-button" id="shuffleButton" type="button" aria-label="피드 섞기">
-          <span aria-hidden="true">✦</span>
-        </button>
+        <button class="round-button" id="shuffleButton" type="button" aria-label="피드 섞기">mix</button>
       </header>
 
       <section class="composer" aria-label="새 포스트">
         <label class="dropzone" for="photoInput">
           <input id="photoInput" type="file" accept="image/*" />
           <img id="previewImage" alt="" />
-          <span id="dropText">photo</span>
+          <span id="dropText">tap<br />photo</span>
         </label>
         <div class="composer-copy">
-          <textarea id="messageInput" maxlength="140" placeholder="오늘의 조각"></textarea>
+          <textarea id="messageInput" maxlength="140" placeholder="caption, hot take, tiny diary"></textarea>
+          <div class="mood-row" aria-label="무드 선택">
+            <button class="mood-chip is-active" type="button" data-mood="fresh">fresh</button>
+            <button class="mood-chip" type="button" data-mood="loud">loud</button>
+            <button class="mood-chip" type="button" data-mood="soft">soft</button>
+          </div>
           <div class="composer-actions">
             <p id="statusText" role="status"></p>
             <button id="saveButton" type="button">post</button>
@@ -342,17 +517,38 @@ textarea::placeholder {
         </div>
       </section>
 
+      <section class="controls" aria-label="피드 컨트롤">
+        <label class="search-box">
+          <span>find</span>
+          <input id="searchInput" type="search" placeholder="caption search" />
+        </label>
+        <div class="segmented" aria-label="정렬">
+          <button class="sort-chip is-active" type="button" data-sort="new">new</button>
+          <button class="sort-chip" type="button" data-sort="liked">liked</button>
+        </div>
+      </section>
+
+      <section class="ticker" aria-label="상태">
+        <span>drag cards</span>
+        <span>tap to pop</span>
+        <span>save to blank</span>
+      </section>
+
       <section class="stage" id="stage" aria-label="피드"></section>
     </main>
 
     <template id="postTemplate">
       <article class="post-card">
+        <button class="like-button" type="button" aria-label="좋아요">+</button>
         <div class="media-wrap">
           <img class="post-image" alt="" draggable="false" />
         </div>
         <div class="post-meta">
           <p class="post-message"></p>
-          <time class="post-date"></time>
+          <div>
+            <time class="post-date"></time>
+            <p class="post-mood"></p>
+          </div>
         </div>
       </article>
     </template>
@@ -362,7 +558,9 @@ textarea::placeholder {
 const SUPABASE_URL = "https://gftydfeqpuavajjzaeun.supabase.co";
 const SUPABASE_KEY = "sb_publishable_35lefXRrUU4MFrAATfghjQ_2EPkUgGy";
 const IMAGE_BUCKET = "post-images";
-const LAYOUT_KEY = "lab-feed-layout-v1";
+const LAYOUT_KEY = "lab-feed-layout-v2";
+const LIKE_KEY = "lab-feed-likes-v1";
+const MOODS = ["fresh", "loud", "soft", "chaos", "main"];
 
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const stage = document.querySelector("#stage");
@@ -374,21 +572,27 @@ const messageInput = document.querySelector("#messageInput");
 const saveButton = document.querySelector("#saveButton");
 const statusText = document.querySelector("#statusText");
 const shuffleButton = document.querySelector("#shuffleButton");
+const searchInput = document.querySelector("#searchInput");
+const moodButtons = [...document.querySelectorAll(".mood-chip")];
+const sortButtons = [...document.querySelectorAll(".sort-chip")];
 
 let selectedFile = null;
+let selectedMood = "fresh";
+let currentSort = "new";
 let posts = [];
-let layout = readLayout();
+let layout = readStore(LAYOUT_KEY, {});
+let likes = readStore(LIKE_KEY, {});
 
-function readLayout() {
+function readStore(key, fallback) {
   try {
-    return JSON.parse(localStorage.getItem(LAYOUT_KEY) || "{}");
+    return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
   } catch {
-    return {};
+    return fallback;
   }
 }
 
-function writeLayout() {
-  localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout));
+function writeStore(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
 function setStatus(text) {
@@ -401,43 +605,75 @@ function publicImageUrl(path) {
 }
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat("ko", { month: "short", day: "numeric" }).format(new Date(value));
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
 }
 
 function fallbackGradient(seed) {
-  const hues = [78, 196, 330, 24, 252];
-  const a = hues[seed % hues.length];
-  const b = hues[(seed + 2) % hues.length];
-  return `linear-gradient(135deg, hsl(${a} 92% 67%), hsl(${b} 92% 66%))`;
+  const pairs = [
+    ["#d7ff2f", "#30d8ff"],
+    ["#ff4fb8", "#ff8a2a"],
+    ["#5468ff", "#d7ff2f"],
+    ["#30d8ff", "#ff4fb8"],
+  ];
+  const [a, b] = pairs[seed % pairs.length];
+  return `linear-gradient(135deg, ${a}, ${b})`;
+}
+
+function postMood(post, index) {
+  const text = `${post.message || ""}`.toLowerCase();
+  if (text.includes("!")) return "loud";
+  if (text.includes("오늘") || text.includes("daily")) return "fresh";
+  return MOODS[index % MOODS.length];
+}
+
+function visiblePosts() {
+  const q = searchInput.value.trim().toLowerCase();
+  const filtered = q
+    ? posts.filter((post) => `${post.message || ""}`.toLowerCase().includes(q))
+    : [...posts];
+
+  if (currentSort === "liked") {
+    filtered.sort((a, b) => Number(Boolean(likes[b.id])) - Number(Boolean(likes[a.id])));
+  }
+
+  return filtered;
 }
 
 function renderPosts({ freshId } = {}) {
+  const visible = visiblePosts();
   stage.innerHTML = "";
 
-  if (!posts.length) {
+  if (!visible.length) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = "아직 조용함";
+    empty.textContent = searchInput.value ? "no matching drops" : "feed is empty";
     stage.appendChild(empty);
     return;
   }
 
-  posts.forEach((post, index) => {
+  visible.forEach((post, index) => {
     const node = template.content.firstElementChild.cloneNode(true);
     const img = node.querySelector(".post-image");
     const media = node.querySelector(".media-wrap");
     const message = node.querySelector(".post-message");
     const date = node.querySelector(".post-date");
+    const mood = node.querySelector(".post-mood");
+    const like = node.querySelector(".like-button");
     const saved = layout[post.id] || {};
+    const vibe = postMood(post, index);
 
     node.dataset.id = post.id;
     node.style.setProperty("--tx", `${saved.x || 0}px`);
     node.style.setProperty("--ty", `${saved.y || 0}px`);
     node.style.setProperty("--rot", `${saved.rot ?? rotationFor(index)}deg`);
+    node.style.setProperty("--scale", saved.hot ? "1.045" : "1");
     if (post.id === freshId) node.classList.add("is-new");
+    if (likes[post.id]) node.classList.add("is-liked");
+    if (saved.hot) node.classList.add("is-hot");
 
     message.textContent = post.message || "untitled";
     date.textContent = post.created_at ? formatDate(post.created_at) : "now";
+    mood.textContent = vibe;
 
     const src = publicImageUrl(post.image_path);
     if (src) {
@@ -448,22 +684,42 @@ function renderPosts({ freshId } = {}) {
       media.style.background = fallbackGradient(index);
     }
 
+    like.addEventListener("click", (event) => {
+      event.stopPropagation();
+      likes[post.id] = !likes[post.id];
+      if (!likes[post.id]) delete likes[post.id];
+      writeStore(LIKE_KEY, likes);
+      node.classList.toggle("is-liked", Boolean(likes[post.id]));
+    });
+
+    node.addEventListener("click", () => {
+      if (node.dataset.justDragged === "true") {
+        node.dataset.justDragged = "false";
+        return;
+      }
+      const current = layout[post.id] || {};
+      layout[post.id] = { ...current, hot: !current.hot };
+      writeStore(LAYOUT_KEY, layout);
+      node.classList.toggle("is-hot", Boolean(layout[post.id].hot));
+      node.style.setProperty("--scale", layout[post.id].hot ? "1.045" : "1");
+    });
+
     attachDrag(node);
     stage.appendChild(node);
   });
 }
 
 function rotationFor(index) {
-  return [-1.4, 1.8, -2.2, 1.1, -0.7][index % 5];
+  return [-1.5, 1.2, -2.1, 1.8, -0.8, 2.4][index % 6];
 }
 
 async function loadPosts() {
-  setStatus("sync");
+  setStatus("syncing");
   const { data, error } = await client
     .from("posts")
     .select("id,message,image_path,created_at")
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(40);
 
   if (error) {
     setStatus(error.message);
@@ -479,7 +735,8 @@ async function loadPosts() {
 function demoPosts() {
   return [
     { id: "demo-a", message: "soft launch", created_at: new Date().toISOString(), image_path: "" },
-    { id: "demo-b", message: "move me", created_at: new Date().toISOString(), image_path: "" },
+    { id: "demo-b", message: "drag me around", created_at: new Date().toISOString(), image_path: "" },
+    { id: "demo-c", message: "tap to pop", created_at: new Date().toISOString(), image_path: "" },
   ];
 }
 
@@ -491,10 +748,27 @@ photoInput.addEventListener("change", () => {
   dropzone.classList.add("has-image");
 });
 
+moodButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    selectedMood = button.dataset.mood;
+    moodButtons.forEach((item) => item.classList.toggle("is-active", item === button));
+  });
+});
+
+sortButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    currentSort = button.dataset.sort;
+    sortButtons.forEach((item) => item.classList.toggle("is-active", item === button));
+    renderPosts();
+  });
+});
+
+searchInput.addEventListener("input", () => renderPosts());
+
 saveButton.addEventListener("click", async () => {
-  const message = messageInput.value.trim();
-  if (!message && !selectedFile) {
-    setStatus("비어 있음");
+  const rawMessage = messageInput.value.trim();
+  if (!rawMessage && !selectedFile) {
+    setStatus("empty drop");
     return;
   }
 
@@ -503,9 +777,10 @@ saveButton.addEventListener("click", async () => {
 
   try {
     const imagePath = selectedFile ? await uploadImage(selectedFile) : "";
+    const message = rawMessage ? `${rawMessage} #${selectedMood}` : `photo drop #${selectedMood}`;
     const { data, error } = await client
       .from("posts")
-      .insert({ message: message || "photo drop", image_path: imagePath })
+      .insert({ message, image_path: imagePath })
       .select("id,message,image_path,created_at")
       .single();
 
@@ -517,7 +792,7 @@ saveButton.addEventListener("click", async () => {
     selectedFile = null;
     previewImage.removeAttribute("src");
     dropzone.classList.remove("has-image");
-    setStatus("saved");
+    setStatus("posted");
     renderPosts({ freshId: data.id });
     window.setTimeout(() => setStatus(""), 1200);
   } catch (error) {
@@ -546,6 +821,7 @@ function attachDrag(card) {
   let startY = 0;
   let baseX = 0;
   let baseY = 0;
+  let moved = false;
   let isDragging = false;
 
   card.addEventListener("pointerdown", (event) => {
@@ -555,48 +831,56 @@ function attachDrag(card) {
     startY = event.clientY;
     baseX = saved.x || 0;
     baseY = saved.y || 0;
+    moved = false;
     isDragging = true;
     card.classList.add("is-dragging");
   });
 
   card.addEventListener("pointermove", (event) => {
     if (!isDragging) return;
-    const x = baseX + event.clientX - startX;
-    const y = baseY + event.clientY - startY;
-    const rot = Math.max(-7, Math.min(7, x / 24));
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+    if (Math.abs(dx) + Math.abs(dy) > 8) moved = true;
+    const x = baseX + dx;
+    const y = baseY + dy;
+    const rot = Math.max(-9, Math.min(9, x / 18));
     card.style.setProperty("--tx", `${x}px`);
     card.style.setProperty("--ty", `${y}px`);
     card.style.setProperty("--rot", `${rot}deg`);
   });
 
-  card.addEventListener("pointerup", (event) => finishDrag(card, event.pointerId));
-  card.addEventListener("pointercancel", (event) => finishDrag(card, event.pointerId));
+  card.addEventListener("pointerup", (event) => finishDrag(card, event.pointerId, moved));
+  card.addEventListener("pointercancel", (event) => finishDrag(card, event.pointerId, moved));
 }
 
-function finishDrag(card, pointerId) {
+function finishDrag(card, pointerId, moved) {
   const matrix = new DOMMatrixReadOnly(getComputedStyle(card).transform);
   const x = Math.round(matrix.m41);
   const y = Math.round(matrix.m42);
   const rot = Number.parseFloat(getComputedStyle(card).getPropertyValue("--rot")) || 0;
+  const current = layout[card.dataset.id] || {};
 
   card.releasePointerCapture(pointerId);
   card.classList.remove("is-dragging");
-  layout[card.dataset.id] = { x, y, rot };
-  writeLayout();
+  card.dataset.justDragged = moved ? "true" : "false";
+  layout[card.dataset.id] = { ...current, x, y, rot };
+  writeStore(LAYOUT_KEY, layout);
+  if (moved) window.setTimeout(() => card.classList.remove("is-hot"), 0);
 }
 
 shuffleButton.addEventListener("click", () => {
   const cards = [...stage.querySelectorAll(".post-card")];
   cards.forEach((card, index) => {
-    const x = Math.round((Math.random() - 0.5) * 54);
-    const y = Math.round((Math.random() - 0.5) * 42);
-    const rot = rotationFor(index) + (Math.random() - 0.5) * 4;
-    layout[card.dataset.id] = { x, y, rot };
+    const current = layout[card.dataset.id] || {};
+    const x = Math.round((Math.random() - 0.5) * 42);
+    const y = Math.round((Math.random() - 0.5) * 34);
+    const rot = rotationFor(index) + (Math.random() - 0.5) * 6;
+    layout[card.dataset.id] = { ...current, x, y, rot };
     card.style.setProperty("--tx", `${x}px`);
     card.style.setProperty("--ty", `${y}px`);
     card.style.setProperty("--rot", `${rot}deg`);
   });
-  writeLayout();
+  writeStore(LAYOUT_KEY, layout);
 });
 
 loadPosts();
