@@ -1,9 +1,10 @@
 const SUPABASE_URL = "https://gftydfeqpuavajjzaeun.supabase.co";
 const SUPABASE_KEY = "sb_publishable_35lefXRrUU4MFrAATfghjQ_2EPkUgGy";
+const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
 const IMAGE_BUCKET = "post-images";
 const LIKED_KEY = "lab-feed-liked-session-v1";
 
-const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let client;
 const stage = document.querySelector("#stage");
 const postTemplate = document.querySelector("#postTemplate");
 const commentTemplate = document.querySelector("#commentTemplate");
@@ -21,6 +22,19 @@ let selectedFile = null;
 let currentSort = "new";
 let posts = [];
 let likedPosts = readLiked();
+
+function loadSupabaseSdk() {
+  if (window.supabase?.createClient) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = SUPABASE_CDN;
+    script.async = true;
+    script.onload = () => (window.supabase?.createClient ? resolve() : reject(new Error("Supabase SDK unavailable")));
+    script.onerror = () => reject(new Error("Supabase SDK failed to load"));
+    document.head.appendChild(script);
+  });
+}
 
 function readLiked() {
   try {
@@ -355,4 +369,9 @@ async function deleteComment(comment) {
   renderPosts();
 }
 
-loadPosts();
+loadSupabaseSdk()
+  .then(() => {
+    client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    return loadPosts();
+  })
+  .catch((error) => setStatus(error.message));
