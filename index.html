@@ -8,16 +8,37 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@500;650;800;900&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=d01d978" />
+    <link rel="stylesheet" href="./lab2.css?v=lab2ish" />
   </head>
   <body>
+    <div class="noise" aria-hidden="true"></div>
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="lab feed home">
+        <span class="brand-spark" aria-hidden="true">✦</span>
+        <span>lab feed</span>
+      </a>
+      <div class="header-center" aria-hidden="true">EST. RIGHT NOW</div>
+      <span class="public-badge"><i></i> live & public</span>
+    </header>
+
     <main class="shell">
-      <header class="hero">
+      <section class="hero">
+        <div class="hero-sticker sticker-smile" aria-hidden="true">
+          <span>☺</span>
+          <small>NO LOGINS<br />JUST LORE</small>
+        </div>
+        <div class="hero-sticker sticker-star" aria-hidden="true">★</div>
+        <div class="hero-sticker sticker-arrow" aria-hidden="true">↘</div>
         <div>
-          <p class="eyebrow">public drop</p>
-          <h1>lab feed</h1>
+          <p class="eyebrow"><span>01</span> THE GROUP CHAT, BUT PUBLIC</p>
+          <h1>DROP<br /><span>YOUR</span> LORE</h1>
         </div>
         <button class="round-button" id="refreshButton" type="button" aria-label="새로고침">sync</button>
-      </header>
+      </section>
+
+      <div class="ticker" aria-hidden="true">
+        <div>POST IT ✦ HEART IT ✦ COMMENT WITH NO CHILL ✦ EDIT THE LORE ✦ DELETE THE EVIDENCE ✦ POST IT ✦</div>
+      </div>
 
       <section class="composer" aria-label="새 포스트">
         <label class="dropzone" for="photoInput">
