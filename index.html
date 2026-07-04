@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>lab feed</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;650;800&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">blank</p>
+          <h1>lab feed</h1>
+        </div>
+        <button class="icon-button" id="shuffleButton" type="button" aria-label="피드 섞기">
+          <span aria-hidden="true">✦</span>
+        </button>
+      </header>
+
+      <section class="composer" aria-label="새 포스트">
+        <label class="dropzone" for="photoInput">
+          <input id="photoInput" type="file" accept="image/*" />
+          <img id="previewImage" alt="" />
+          <span id="dropText">photo</span>
+        </label>
+        <div class="composer-copy">
+          <textarea id="messageInput" maxlength="140" placeholder="오늘의 조각"></textarea>
+          <div class="composer-actions">
+            <p id="statusText" role="status"></p>
+            <button id="saveButton" type="button">post</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage" id="stage" aria-label="피드"></section>
+    </main>
+
+    <template id="postTemplate">
+      <article class="post-card">
+        <div class="media-wrap">
+          <img class="post-image" alt="" draggable="false" />
+        </div>
+        <div class="post-meta">
+          <p class="post-message"></p>
+          <time class="post-date"></time>
+        </div>
+      </article>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
